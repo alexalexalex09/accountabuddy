@@ -1,23 +1,60 @@
 import OpenAI from 'openai';
 
-// Note: In a real app, store API key securely, e.g., in environment variables or secure storage
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY', // Fallback for development
+  apiKey: process.env.OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY',
 });
 
-export const analyzeResponse = async (text) => {
+const BUDDY_SYSTEM_PROMPT = `You are an accountability buddy—warm, supportive, and occasionally playfully guilt-inducing like a good friend who cares. You use encouragement, gentle nudging, and light guilt (e.g. "Come on, you've got this!" or "I believe in you, but today wasn't the day—tomorrow will be!") to help the user stick to their goals.
+
+When analyzing a user's check-in about whether they completed their goal:
+1. Determine if they actually completed it (true/false). Be fair but not overly lenient—vague or evasive answers suggest incomplete.
+2. Identify sentiment: positive, negative, or neutral.
+
+Always respond with valid JSON only: {"completed": boolean, "sentiment": "string"}`;
+
+/**
+ * Analyzes a user's check-in response with full goal context.
+ * @param {string} text - User's check-in text
+ * @param {Object} goal - Goal object { name, description, timescale }
+ * @param {Array} recentResponses - Recent check-ins [{ date, text, completed, sentiment }]
+ * @returns {Promise<{completed: boolean, sentiment: string}>}
+ */
+export const analyzeResponse = async (text, goal, recentResponses = []) => {
   try {
-    const prompt = `Analyze the following response about completing a daily habit. Determine:
-1. Whether the habit was actually completed (true/false)
-2. The overall sentiment (positive, negative, neutral)
+    const goalContext = [
+      `Goal: ${goal?.name || 'Unknown'}`,
+      goal?.description ? `Description: ${goal.description}` : null,
+      `Timescale: ${goal?.timescale || 'daily'}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
 
-Response: "${text}"
+    const historyText =
+      recentResponses.length > 0
+        ? `Recent check-ins:\n${recentResponses
+            .slice(-5)
+            .map(
+              (r) =>
+                `- ${r.date}: "${r.text}" (completed: ${r.completed}, sentiment: ${r.sentiment})`
+            )
+            .join('\n')}`
+        : 'No previous check-ins.';
 
-Provide the answer in JSON format: {"completed": boolean, "sentiment": "string"}`;
+    const userPrompt = `Goal context:
+${goalContext}
+
+${historyText}
+
+Today's response: "${text}"
+
+Analyze and respond with JSON only: {"completed": boolean, "sentiment": "string"}`;
 
     const response = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
-      messages: [{ role: 'user', content: prompt }],
+      messages: [
+        { role: 'system', content: BUDDY_SYSTEM_PROMPT },
+        { role: 'user', content: userPrompt },
+      ],
       max_tokens: 100,
     });
 
@@ -25,12 +62,11 @@ Provide the answer in JSON format: {"completed": boolean, "sentiment": "string"}
     const parsed = JSON.parse(result);
 
     return {
-      completed: parsed.completed,
-      sentiment: parsed.sentiment,
+      completed: !!parsed.completed,
+      sentiment: String(parsed.sentiment || 'neutral').toLowerCase(),
     };
   } catch (error) {
     console.error('AI Analysis Error:', error);
-    // Fallback: assume completed if text is provided
     return {
       completed: true,
       sentiment: 'neutral',

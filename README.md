@@ -36,12 +36,13 @@ AccountaBuddy acts as a personal accountability buddy for one or more goals. The
 
 The app is in early development. Implemented so far:
 
-- Add habits to track
-- Daily reminders via push notifications
-- Text responses about habit completion
-- AI-powered analysis of responses (completion + sentiment)
-- Escalating reminders in the evening if not completed
-- Local storage (AsyncStorage)
+- Goals with timescale (daily/weekly/monthly)
+- First-launch onboarding and goal creation
+- Editable goals (name, description, timescale)
+- Daily check-ins with AI analysis (completion + sentiment)
+- Push notifications (mobile only)
+- Email/password and Google sign-in (optional, via Supabase)
+- Local storage (AsyncStorage) or cloud sync (Supabase) when signed in
 
 ## Setup
 
@@ -50,10 +51,19 @@ The app is in early development. Implemented so far:
    npm install
    ```
 
-2. Set up your OpenAI API key in the `.env` file:
+2. Copy `.env.example` to `.env` and configure:
    ```
    OPENAI_API_KEY=your_actual_api_key_here
+   # Optional: for auth and sync
+   EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+   EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your_publishable_key
    ```
+
+3. (Optional) Supabase setup for auth and cloud sync:
+   - Create a project at [supabase.com](https://supabase.com)
+   - Run the SQL in `supabase/migrations/001_goals.sql` in the SQL Editor
+   - Enable Email and Google providers in Authentication → Providers
+   - Add the redirect URL from `npx expo start` (or use `accountabuddy://`) in Authentication → URL Configuration
 
 3. (Windows) Make sure your Java SDK is set to **Java 17**. Android builds can fail on newer JDKs (e.g. JDK 21/GraalVM).
    - Install Temurin 17 (or another JDK 17 distribution)
@@ -87,12 +97,14 @@ The app is in early development. Implemented so far:
 
 ## Usage
 
-- Add a new habit from the home screen
-- Tap a habit to view details and submit daily responses
-- Notifications remind you throughout the day; they become more urgent in the evening if the habit is not completed
+- Add goals from the home screen (or create your first goal on first launch)
+- Tap a goal to view details and submit daily check-ins
+- Edit goals from the detail screen
+- Sign in with email or Google to sync goals across devices
+- Continue without signing in to use local storage only
 
 ## Notes
 
 - AI analysis requires an internet connection and OpenAI API key
-- Notifications require permission on the device
-- Data is stored locally using AsyncStorage
+- Notifications require permission on the device (mobile only)
+- Data is stored locally when not signed in; cloud sync when signed in

@@ -12,16 +12,16 @@ Based on the [product vision](README.md#product-vision) and implementation plan.
 
 ## Phase 2: Auth + cloud persistence
 
-- [ ] Add auth (email/password + Google) via Firebase or Supabase
-- [ ] Add backend/BaaS for goals and responses
-- [ ] Implement sync logic with offline cache for signed-in users
-- [ ] Migrate from AsyncStorage to cloud-backed storage
+- [x] Add auth (email/password + Google) via Firebase or Supabase
+- [x] Add backend/BaaS for goals and responses
+- [x] Implement sync logic with offline cache for signed-in users
+- [x] Migrate from AsyncStorage to cloud-backed storage
 
 ## Phase 3: AI persona + full context
 
-- [ ] Define AI system prompt with buddy persona (encourage, nudge, guilt)
-- [ ] Pass goal text, timescale, and recent check-ins to AI on each call
-- [ ] Wire main check-in flow to use full AI context
+- [x] Define AI system prompt with buddy persona (encourage, nudge, guilt)
+- [x] Pass goal text, timescale, and recent check-ins to AI on each call
+- [x] Wire main check-in flow to use full AI context
 
 ## Phase 4: Smart notifications
 

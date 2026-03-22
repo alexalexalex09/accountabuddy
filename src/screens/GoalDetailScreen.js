@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import { updateGoal as updateGoalInStorage } from '../services/GoalsService';
 import { analyzeResponse } from '../services/AIService';
-import { GOALS_STORAGE_KEY } from '../constants/storage';
 import { TIMESCALES } from '../models/goal';
 
 const GoalDetailScreen = ({ route, navigation }) => {
+  const { user } = useAuth();
   const { goal: initialGoal } = route.params;
   const [goal, setGoal] = useState(initialGoal);
   const [response, setResponse] = useState('');
@@ -38,15 +39,9 @@ const GoalDetailScreen = ({ route, navigation }) => {
       return;
     }
     try {
-      const stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-      const goals = JSON.parse(stored || '[]');
-      const idx = goals.findIndex(g => g.id === goal.id);
-      if (idx >= 0) {
-        goals[idx] = { ...goals[idx], ...updated };
-        await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
-        setGoal(updated);
-        setIsEditing(false);
-      }
+      await updateGoalInStorage(updated, user?.id);
+      setGoal(updated);
+      setIsEditing(false);
     } catch (error) {
       Alert.alert('Error', 'Failed to save changes.');
     }
@@ -62,7 +57,7 @@ const GoalDetailScreen = ({ route, navigation }) => {
     const existingIndex = responses.findIndex(r => r.date === today);
 
     try {
-      const analysis = await analyzeResponse(response);
+      const analysis = await analyzeResponse(response, goal, responses);
       const newResponse = {
         date: today,
         text: response,
@@ -82,13 +77,8 @@ const GoalDetailScreen = ({ route, navigation }) => {
       setResponse('');
       setIsCompletedToday(newResponse.completed);
 
-      const stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-      const goals = JSON.parse(stored || '[]');
-      const idx = goals.findIndex(g => g.id === goal.id);
-      if (idx >= 0) {
-        goals[idx].responses = updatedResponses;
-        await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
-      }
+      const updatedGoal = { ...goal, responses: updatedResponses };
+      await updateGoalInStorage(updatedGoal, user?.id);
 
       Alert.alert('Success', `Response submitted. Completed: ${newResponse.completed ? 'Yes' : 'No'}`);
     } catch (error) {

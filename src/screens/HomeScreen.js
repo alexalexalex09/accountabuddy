@@ -1,28 +1,19 @@
 import React, { useCallback, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { GOALS_STORAGE_KEY, LEGACY_HABITS_STORAGE_KEY } from '../constants/storage';
-import { habitToGoal } from '../models/goal';
+import { useAuth } from '../contexts/AuthContext';
+import { getGoals } from '../services/GoalsService';
 
 const HomeScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [goals, setGoals] = useState([]);
 
   const loadGoals = async () => {
-    let stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-    if (!stored) {
-      const legacy = await AsyncStorage.getItem(LEGACY_HABITS_STORAGE_KEY);
-      if (legacy) {
-        const habits = JSON.parse(legacy);
-        const migrated = habits.map(habitToGoal);
-        await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(migrated));
-        await AsyncStorage.removeItem(LEGACY_HABITS_STORAGE_KEY);
-        stored = JSON.stringify(migrated);
-      }
-    }
-    if (stored) {
-      setGoals(JSON.parse(stored));
-    } else {
+    try {
+      const data = await getGoals(user?.id);
+      setGoals(data || []);
+    } catch (error) {
+      console.warn('Failed to load goals:', error);
       setGoals([]);
     }
   };
@@ -30,7 +21,7 @@ const HomeScreen = ({ navigation }) => {
   useFocusEffect(
     useCallback(() => {
       loadGoals();
-    }, [])
+    }, [user?.id])
   );
 
   const renderGoal = ({ item }) => (

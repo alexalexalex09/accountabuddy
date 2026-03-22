@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, Platform } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../contexts/AuthContext';
+import { addGoal as addGoalToStorage } from '../services/GoalsService';
 import { createGoal, TIMESCALES } from '../models/goal';
-import { GOALS_STORAGE_KEY } from '../constants/storage';
 
 const AddGoalScreen = ({ navigation }) => {
+  const { user } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [timescale, setTimescale] = useState('daily');
@@ -22,10 +23,7 @@ const AddGoalScreen = ({ navigation }) => {
     });
 
     try {
-      const stored = await AsyncStorage.getItem(GOALS_STORAGE_KEY);
-      const goals = stored ? JSON.parse(stored) : [];
-      goals.push(newGoal);
-      await AsyncStorage.setItem(GOALS_STORAGE_KEY, JSON.stringify(goals));
+      await addGoalToStorage(newGoal, user?.id);
 
       if (Platform.OS !== 'web') {
         const { scheduleGoalNotifications } = require('../services/NotificationService');
