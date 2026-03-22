@@ -4,11 +4,11 @@ Based on the [product vision](README.md#product-vision) and implementation plan.
 
 ## Phase 1: Goal model + onboarding
 
-- [ ] Add Goal data model (name, description, timescale, reminder policy)
-- [ ] First-launch flow: route to Create Goal if none exist
-- [ ] Refactor habits → goals in storage, screens, and services
-- [ ] Make goals editable from detail screen or settings
-- [ ] Wire NotificationService to work with goals model
+- [x] Add Goal data model (name, description, timescale, reminder policy)
+- [x] First-launch flow: route to Create Goal if none exist
+- [x] Refactor habits → goals in storage, screens, and services
+- [x] Make goals editable from detail screen or settings
+- [x] Wire NotificationService to work with goals model
 
 ## Phase 2: Auth + cloud persistence
 
